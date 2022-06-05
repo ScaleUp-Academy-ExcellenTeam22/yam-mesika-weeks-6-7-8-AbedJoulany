@@ -11,11 +11,12 @@ class PostOffice:
         self.message_id = 0
         self.boxes = {user: [] for user in usernames}
 
-    def send_message(self, sender, recipient, message_body, urgent=False):
+    def send_message(self, sender, recipient, message_title, message_body, urgent=False):
         """Send a message to a recipient.
 
         :param str sender: The message sender's username.
         :param str recipient: The message recipient's username.
+        :param str message_title: The title of the message.
         :param str message_body: The body of the message.
         :param urgent: The urgency of the message.
         :type urgent: bool, optional
@@ -27,8 +28,10 @@ class PostOffice:
         self.message_id = self.message_id + 1
         message_details = {
             'id': self.message_id,
+            'title': message_title,
             'body': message_body,
             'sender': sender,
+            'read': False,
         }
         if urgent:
             user_box.insert (0, message_details)
@@ -45,7 +48,13 @@ class PostOffice:
         :rtype: list
 
         """
-        return self.boxes[username][:n if n != -1 else len(self.boxes[username])]
+        messages = [msg for msg in self.boxes[username]
+        [:n if n != -1 else len(self.boxes[username])] if msg['read'] is False]
+
+        for msg in messages:
+            msg['read'] = True
+
+        return messages
 
     def search_inbox(self, username, string) -> list:
         """
@@ -55,7 +64,8 @@ class PostOffice:
         :return list: the messages that contains the passed string
         :rtype: list
         """
-        return [msg for msg in self.boxes[username] if string in msg['body']]
+        return [msg for msg in self.boxes[username] if string.lower() in msg['body'].lower() or
+                string.lower() in msg['title'].lower()]
 
 
 def show_example():
@@ -64,15 +74,18 @@ def show_example():
     post_office = PostOffice (users)
     message_id = post_office.send_message (
         sender='Mr. Peanutbutter',
+        message_title='hi',
         recipient='Newman',
         message_body='Hello, Newman.',
     )
     message_id = post_office.send_message (
         sender='Mr. Peanutbutter',
+        message_title='hello',
         recipient='Newman',
-        message_body='Hello, Newman2.',
+        message_body='hi, Newman2.',
     )
 
+    print (post_office.read_inbox ('Newman', 1))
     print (post_office.read_inbox ('Newman', 1))
     print (post_office.search_inbox('Newman', 'Hello'))
 
